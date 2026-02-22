@@ -1,0 +1,243 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 9,
+  "summary": "Extend AS19 to update the authentication approach (current method not working on web-to-app), display the logged-in user identifier (email, if available via an email-based auth provider) in the user’s own profile as read-only and not visible to admins, and fix a critical security issue where personal storage access is incorrectly scoped by email such that users can access other users’ storage.",
+  "architectural_notes": [
+    "Internet Identity does not expose user email by design; it provides only a principal/identifier, so showing email requires an email-based auth provider (e.g., NFID) or separate email auth.",
+    "Profile identifier field should be scoped to self-view only (not exposed in admin views/APIs unless explicitly required).",
+    "Personal storage access must be authorized server-side using the authenticated user identity (e.g., principal/session), not an arbitrary email identifier provided by the client; prevent any cross-user access paths."
+  ],
+  "known_issues": [
+    "Video upload option not appearing in the app UI (Videos section interface not active).",
+    "Current login method is not working in the web-to-app flow.",
+    "Critical security bug: personal storage is accessible via other users' email IDs (authorization scoped incorrectly, allowing cross-user storage access)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-add-memories-and-documents-to-the-primary-app-navigation-and-wire-them-into-the-main-section-routing-so-authenticated-users-can-open-these-sections-from-the-nav-alongside-media-center-photos-videos-storage-profile",
+      "title": "Add \"Memories\" and \"Documents\" to the primary app navigation and wire them into the main section routing so authenticated users can open these sections from the nav (alongside Media Center, Photos, Videos, Storage, Profile).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-full-documents-functionality-end-to-end-upload-list-view-download-and-delete-documents-using-the-existing-backend-actor-as-the-source-of-truth-and-react-query-hooks-on-the-frontend",
+      "title": "Implement full Documents functionality end-to-end: upload, list/view, download, and delete documents, using the existing backend actor as the source of truth and React Query hooks on the frontend.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-memories-section-end-to-end-including-backend-storage-and-frontend-ui-for-creating-listing-viewing-editing-and-deleting-memory-entries",
+      "title": "Implement a Memories section end-to-end, including backend storage and frontend UI for creating, listing, viewing, editing, and deleting memory entries.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-balance-the-ui-space-between-the-memories-and-documents-sections-so-they-are-presented-with-equal-visual-weight-wherever-they-appear-side-by-side-e-g-in-any-dashboard-category-grid-cards-with-responsive-behavior-for-mobile-and-desktop",
+      "title": "Balance the UI space between the Memories and Documents sections so they are presented with equal visual weight wherever they appear side-by-side (e.g., in any dashboard/category grid/cards), with responsive behavior for mobile and desktop.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-storage-metrics-to-include-documents-and-memories-and-ensure-storage-allocation-limits-are-split-between-documents-and-memories-evenly-while-keeping-total-storage-within-the-existing-global-limit",
+      "title": "Update storage metrics to include Documents and Memories, and ensure storage allocation/limits are split between Documents and Memories (evenly) while keeping total storage within the existing global limit.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-profile-screen-ui-to-display-the-logged-in-user-s-login-identifier-as-read-only-not-editable-and-remove-the-current-editable-email-input-behavior",
+      "title": "Update the Profile screen UI to display the logged-in user's login identifier as read-only (not editable) and remove the current editable email input behavior.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-adjust-english-translations-for-the-new-read-only-login-identifier-field-and-any-related-empty-state-text",
+      "title": "Add/adjust English translations for the new read-only login identifier field and any related empty-state text.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-frontend-queries-to-align-with-the-corrected-backend-authorization-behavior-and-ensure-the-ui-never-relies-on-an-email-string-or-other-user-provided-identifier-to-select-which-storage-to-load",
+      "title": "Update frontend queries to align with the corrected backend authorization behavior and ensure the UI never relies on an email string (or other user-provided identifier) to select which storage to load.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-pin-setup-screen-that-appears-during-initial-account-creation-prompting-the-user-to-create-a-4-6-digit-pin-with-confirmation-entry",
+      "title": "Create a PIN setup screen that appears during initial account creation, prompting the user to create a 4-6 digit PIN with confirmation entry",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-pin-verification-screen-that-blocks-access-to-photos-videos-documents-and-memories-sections-until-correct-pin-is-entered",
+      "title": "Implement PIN verification screen that blocks access to Photos, Videos, Documents, and Memories sections until correct PIN is entered",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-pin-reset-forgot-flow-that-allows-users-to-reset-their-pin-through-security-questions-or-identity-re-verification",
+      "title": "Create a PIN reset/forgot flow that allows users to reset their PIN through security questions or identity re-verification",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-change-pin-option-in-the-profile-settings-that-requires-current-pin-verification-before-allowing-a-new-pin-to-be-set",
+      "title": "Add a Change PIN option in the Profile settings that requires current PIN verification before allowing a new PIN to be set",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-english-and-hindi-translations-for-all-pin-related-ui-text-including-setup-verification-forgot-change-and-error-messages",
+      "title": "Add English and Hindi translations for all PIN-related UI text including setup, verification, forgot, change, and error messages",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-session-based-pin-authentication-so-users-do-not-need-to-re-enter-pin-for-every-folder-access-within-the-same-session",
+      "title": "Implement session-based PIN authentication so users do not need to re-enter PIN for every folder access within the same session",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Add/restore a Documents section (upload/view/download/delete files such as PDF, DOCX, TXT up to ~50MB).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add/restore a Memories section.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Enable a Videos section with video upload/view/delete support (original quality).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Adjust/split available space appropriately between Memories and Documents (space allocation/UX layout).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Change/replace the current login method because it is not working on web-to-app.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Show the logged-in user's email/identifier in their own Profile screen as uneditable (visible to the user only, not to admin).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add an email-based login option (e.g., NFID or Email/Password) so an email can be displayed in-profile (since Internet Identity does not provide email).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add backend support to store and return a caller-only login identifier that is never included in any admin-accessible user profile APIs.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Fix critical storage access control bug: ensure a user can access only their own personal storage (remove/avoid email-based access that allows cross-user access) and enforce user-based authorization.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Update backend authorization so all personal storage (photos, videos, documents, memories) is scoped to the authenticated caller (Principal) and cannot be accessed by providing or guessing another user’s identifier (e.g., email).",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Fix photo access control: ensure photo listing and photo metadata retrieval do not expose other users’ photos to regular users.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Fix video access control: ensure video listing and video metadata retrieval do not expose other users’ videos to regular users.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Replace current login method with Google OAuth login system.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Create a PIN system for accessing all folders: users must set a PIN during account creation, enter PIN to open folders, with PIN forget/reset and PIN change functionality.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Add a PIN field to the backend user profile storage that can be set during account creation and updated later",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Add backend PIN verification endpoint that validates the submitted PIN against the stored hash for the authenticated user",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "AS19",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

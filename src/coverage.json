@@ -1,0 +1,165 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-22T18:22:26.823Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 8,
+    "implemented": 6,
+    "items": [
+      {
+        "id": "REQ-13",
+        "summary": "Add a PIN field to the backend user profile storage that can be set during account creation and updated later",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-14",
+        "summary": "Create a PIN setup screen that appears during initial account creation, prompting the user to create a 4-6 digit PIN with confirmation entry",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/PinSetup.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/lib/translations.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/PinSetup.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/lib/translations.ts"
+        ]
+      },
+      {
+        "id": "REQ-15",
+        "summary": "Implement PIN verification screen that blocks access to Photos, Videos, Documents, and Memories sections until correct PIN is entered",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/PinVerification.tsx",
+          "frontend/src/hooks/usePinSession.ts",
+          "frontend/src/pages/PhotosPage.tsx",
+          "frontend/src/pages/VideosPage.tsx",
+          "frontend/src/pages/DocumentsPage.tsx",
+          "frontend/src/pages/MemoriesPage.tsx",
+          "frontend/src/lib/translations.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/PinVerification.tsx",
+          "frontend/src/hooks/usePinSession.ts",
+          "frontend/src/pages/PhotosPage.tsx",
+          "frontend/src/pages/VideosPage.tsx",
+          "frontend/src/pages/DocumentsPage.tsx",
+          "frontend/src/pages/MemoriesPage.tsx",
+          "frontend/src/lib/translations.ts"
+        ]
+      },
+      {
+        "id": "REQ-16",
+        "summary": "Add backend PIN verification endpoint that validates the submitted PIN against the stored hash for the authenticated user",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-17",
+        "summary": "Create a PIN reset/forgot flow that allows users to reset their PIN through security questions or identity re-verification",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/PinReset.tsx",
+          "frontend/src/components/PinVerification.tsx",
+          "frontend/src/lib/translations.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/PinReset.tsx",
+          "frontend/src/components/PinVerification.tsx",
+          "frontend/src/lib/translations.ts"
+        ]
+      },
+      {
+        "id": "REQ-18",
+        "summary": "Add a Change PIN option in the Profile settings that requires current PIN verification before allowing a new PIN to be set",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/PinChangeForm.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/lib/translations.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/PinChangeForm.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/lib/translations.ts"
+        ]
+      },
+      {
+        "id": "REQ-19",
+        "summary": "Add English and Hindi translations for all PIN-related UI text including setup, verification, forgot, change, and error messages",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/lib/translations.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/lib/translations.ts"
+        ]
+      },
+      {
+        "id": "REQ-20",
+        "summary": "Implement session-based PIN authentication so users do not need to re-enter PIN for every folder access within the same session",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/usePinSession.ts",
+          "frontend/src/components/Navigation.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/lib/translations.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/usePinSession.ts",
+          "frontend/src/components/Navigation.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/lib/translations.ts"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "caffeine.lock.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/DocumentGallery.tsx",
+    "frontend/src/components/DocumentStorageMonitor.tsx",
+    "frontend/src/components/DocumentUpload.tsx",
+    "frontend/src/components/MemoriesStorageMonitor.tsx",
+    "frontend/src/components/Navigation.tsx",
+    "frontend/src/components/PinChangeForm.tsx",
+    "frontend/src/components/PinReset.tsx",
+    "frontend/src/components/PinSetup.tsx",
+    "frontend/src/components/PinVerification.tsx",
+    "frontend/src/components/ProfileSetup.tsx",
+    "frontend/src/components/StoryEditor.tsx",
+    "frontend/src/components/StoryList.tsx",
+    "frontend/src/components/VideoGallery.tsx",
+    "frontend/src/components/VideoUpload.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/usePinSession.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/translations.ts",
+    "frontend/src/pages/DocumentsPage.tsx",
+    "frontend/src/pages/MemoriesPage.tsx",
+    "frontend/src/pages/PhotosPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/VideosPage.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "kind": "build_request",
+  "title": "Add PIN-based folder access control with setup, verification, and recovery",
+  "projectName": "Secure Personal Storage",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-13",
+      "text": "Add a PIN field to the backend user profile storage that can be set during account creation and updated later",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "when user create a new account, sath me ek pin bhi banaye"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend stores a secure PIN (4-6 digits) for each user",
+        "PIN is hashed before storage and never returned in plaintext",
+        "Users can set PIN during profile creation",
+        "Users can update their PIN after verification"
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "text": "Create a PIN setup screen that appears during initial account creation, prompting the user to create a 4-6 digit PIN with confirmation entry",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "when user create a new account, sath me ek pin bhi banaye"
+        ]
+      },
+      "acceptanceCriteria": [
+        "PIN setup appears immediately after profile setup for new users",
+        "User must enter PIN twice to confirm",
+        "Both entries must match before proceeding",
+        "Clear visual feedback for PIN strength and match status"
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "text": "Implement PIN verification screen that blocks access to Photos, Videos, Documents, and Memories sections until correct PIN is entered",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "jise dalne ke baad hi folders open ho"
+        ]
+      },
+      "acceptanceCriteria": [
+        "PIN entry prompt appears when user attempts to access any folder section",
+        "Folders remain locked until correct PIN is verified",
+        "Invalid PIN shows error message and allows retry",
+        "Successful PIN entry grants access to all folders for the session"
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "text": "Add backend PIN verification endpoint that validates the submitted PIN against the stored hash for the authenticated user",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "jise dalne ke baad hi folders open ho"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Endpoint accepts PIN input and returns success/failure",
+        "PIN comparison uses secure hash verification",
+        "Rate limiting prevents brute force attempts",
+        "Only the authenticated user can verify their own PIN"
+      ]
+    },
+    {
+      "id": "REQ-17",
+      "text": "Create a PIN reset/forgot flow that allows users to reset their PIN through security questions or identity re-verification",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "forget system bhi ho real"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Forgot PIN link appears on PIN entry screen",
+        "User must re-authenticate using their login method to reset PIN",
+        "After re-authentication, user can set a new PIN",
+        "Backend validates identity before allowing PIN reset"
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "text": "Add a Change PIN option in the Profile settings that requires current PIN verification before allowing a new PIN to be set",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "change bhi"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Change PIN option appears in Profile settings",
+        "User must enter current PIN before setting new PIN",
+        "New PIN must be confirmed with double entry",
+        "Success message confirms PIN change"
+      ]
+    },
+    {
+      "id": "REQ-19",
+      "text": "Add English and Hindi translations for all PIN-related UI text including setup, verification, forgot, change, and error messages",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All PIN screens display text in user's selected language",
+        "Translations include setup instructions, error messages, and success confirmations",
+        "Forgot PIN flow fully translated",
+        "Change PIN interface fully translated"
+      ]
+    },
+    {
+      "id": "REQ-20",
+      "text": "Implement session-based PIN authentication so users do not need to re-enter PIN for every folder access within the same session",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ]
+      },
+      "acceptanceCriteria": [
+        "PIN verification persists for the browser session",
+        "Session expires on logout or browser close",
+        "User must re-enter PIN after session expiration",
+        "Clear visual indicator shows when folders are unlocked"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not change the existing backend actor architecture (single-actor pattern)",
+    "Do not modify immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui",
+    "PIN must be stored as a secure hash, never in plaintext",
+    "PIN verification must be scoped to the authenticated Principal only"
+  ],
+  "nonGoals": [
+    "Biometric authentication",
+    "Multi-factor authentication beyond PIN",
+    "PIN recovery via email or SMS",
+    "Time-based PIN expiration",
+    "Separate PINs for different folder types"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
