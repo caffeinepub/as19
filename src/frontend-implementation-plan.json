@@ -1,182 +1,115 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add PIN-based folder access control with setup, verification, and recovery",
+  "title": "Add Master Admin Dashboard with Analytics and Privacy Guardrails",
   "requirements": [
     {
-      "id": "REQ-14",
-      "summary": "Create PIN setup screen during initial account creation with confirmation entry",
+      "id": "REQ-6",
+      "summary": "Create an Admin Dashboard page component accessible only to authenticated users with the Master Principal ID, displaying user count, canister inventory, storage insights, and cycle balance",
       "acceptanceCriteria": [
-        "PIN setup appears immediately after profile setup for new users",
-        "User must enter PIN twice to confirm",
-        "Both entries must match before proceeding",
-        "Clear visual feedback for PIN strength and match status"
+        "Dashboard page is protected by Internet Identity authentication",
+        "Page verifies user principal matches Master Principal ID before rendering",
+        "Unauthorized users see an access denied message",
+        "Dashboard displays real-time analytics from backend"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PinSetup.tsx",
+          "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "create",
-          "description": "Create a PIN setup component that prompts new users to create a 4-6 digit PIN with confirmation entry. Include validation for PIN length, match verification between both entries, and visual feedback for strength and match status. Use translations from frontend/src/lib/translations.ts for all UI text. Show error messages when PINs don't match or don't meet requirements. Call saveCallerUserProfile with the PIN field after successful setup."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire the PinSetup component into the authentication flow. Show PinSetup immediately after ProfileSetup for new users who don't have a PIN set in their profile. Use the userProfile state to determine if PIN setup is needed. Ensure PinSetup appears before granting access to the main application routes."
-        },
-        {
-          "path": "frontend/src/lib/translations.ts",
-          "operation": "modify",
-          "description": "Add English and Hindi translation keys for PIN setup including: setup title, instructions, PIN input labels, confirm PIN label, PIN mismatch error, PIN length error, PIN strength feedback, and success message."
+          "description": "Create Admin Dashboard page component that verifies the current user's principal matches the Master Principal ID before rendering analytics. Display an access denied message for unauthorized users. The page will render metric cards for user count, canister inventory, storage insights table, and cycle balance. Use the authorization component to verify admin status via isCallerAdmin backend capability."
         }
       ]
     },
     {
-      "id": "REQ-15",
-      "summary": "Implement PIN verification screen blocking access to protected folder sections",
+      "id": "REQ-7",
+      "summary": "Design the Admin Dashboard with a dark-themed Command Center interface featuring visual counters for user count and canister inventory, progress bars showing storage distribution across categories, and cycle balance indicators",
       "acceptanceCriteria": [
-        "PIN entry prompt appears when user attempts to access any folder section",
-        "Folders remain locked until correct PIN is verified",
-        "Invalid PIN shows error message and allows retry",
-        "Successful PIN entry grants access to all folders for the session"
+        "Dashboard uses a dark theme with high contrast",
+        "User and canister counts are displayed in prominent counter components",
+        "Storage usage shows progress bars for total storage and per-category breakdown",
+        "Cycle balance is displayed with visual indicators for health status",
+        "Layout resembles a command center with organized metric cards"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PinVerification.tsx",
+          "path": "frontend/src/components/AdminMetricCard.tsx",
           "operation": "create",
-          "description": "Create a PIN verification component that prompts users to enter their PIN before accessing protected content. Include a numeric input field (4-6 digits), verification button, error message display for invalid PINs, and retry capability. Call the backend verifyPin method and handle success/failure responses. Use translations for all UI text including title, input label, verify button, error messages, and forgot PIN link."
+          "description": "Create a reusable metric card component for displaying admin analytics with dark theme styling, title, value, optional subtitle, and optional progress bar. Support both counter and gauge display modes with high-contrast colors suitable for a command center interface."
         },
         {
-          "path": "frontend/src/hooks/usePinSession.ts",
+          "path": "frontend/src/components/AdminStorageTable.tsx",
           "operation": "create",
-          "description": "Create a custom hook to manage PIN session state using sessionStorage. Track whether the user has successfully verified their PIN in the current session. Provide methods to verify PIN (calling backend verifyPin), check verification status, and clear session on logout. Return isVerified state and verifyPin function."
+          "description": "Create a table component to display per-user storage metrics including token ID (Principal), total storage used, and category breakdown (photos, videos, documents, memories) with sizes formatted in appropriate units (MB, GB, TB). Include a summary row showing total aggregated storage across all users. Use dark theme styling consistent with the command center aesthetic."
         },
         {
-          "path": "frontend/src/pages/PhotosPage.tsx",
-          "operation": "modify",
-          "description": "Add PIN verification guard before showing photo content. Use the usePinSession hook to check if PIN is verified. If not verified, render the PinVerification component instead of the photo gallery. After successful verification, show the existing PhotoUpload and PhotoGallery components."
+          "path": "frontend/src/components/AdminCycleBalanceIndicator.tsx",
+          "operation": "create",
+          "description": "Create a cycle balance indicator component that displays the main canister's cycle balance in a human-readable format with visual health status indicators (healthy/warning/critical thresholds). Use progress bar or gauge visualization with color coding for sustainability status."
         },
         {
-          "path": "frontend/src/pages/VideosPage.tsx",
+          "path": "frontend/index.html",
           "operation": "modify",
-          "description": "Add PIN verification guard before showing video content. Use the usePinSession hook to check if PIN is verified. If not verified, render the PinVerification component instead of the video gallery. After successful verification, show the existing VideoUpload and VideoGallery components."
-        },
-        {
-          "path": "frontend/src/pages/DocumentsPage.tsx",
-          "operation": "modify",
-          "description": "Add PIN verification guard before showing document content. Use the usePinSession hook to check if PIN is verified. If not verified, render the PinVerification component instead of the document gallery. After successful verification, show the existing DocumentUpload and DocumentGallery components."
-        },
-        {
-          "path": "frontend/src/pages/MemoriesPage.tsx",
-          "operation": "modify",
-          "description": "Add PIN verification guard before showing memories content. Use the usePinSession hook to check if PIN is verified. If not verified, render the PinVerification component instead of the memories editor and list. After successful verification, show the existing StoryEditor and StoryList components."
-        },
-        {
-          "path": "frontend/src/lib/translations.ts",
-          "operation": "modify",
-          "description": "Add English and Hindi translation keys for PIN verification including: verification title, PIN input label, verify button text, invalid PIN error, retry message, forgot PIN link text, and access granted message."
+          "description": "Add dark mode support to the HTML root element or body class to ensure the admin dashboard dark theme is properly applied across the application when needed."
         }
       ]
     },
     {
-      "id": "REQ-17",
-      "summary": "Create PIN reset/forgot flow with identity re-verification",
+      "id": "REQ-8",
+      "summary": "Create React Query hooks to fetch admin analytics data including user count, canister count, storage insights, and cycle balance from the backend",
       "acceptanceCriteria": [
-        "Forgot PIN link appears on PIN entry screen",
-        "User must re-authenticate using their login method to reset PIN",
-        "After re-authentication, user can set a new PIN",
-        "Backend validates identity before allowing PIN reset"
+        "Hooks use React Query for data fetching and caching",
+        "Data refreshes at regular intervals to show real-time updates",
+        "Error states are handled gracefully",
+        "Loading states are displayed during data fetch"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PinReset.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add React Query hooks for admin analytics: useGetUniqueUserProfileCount (fetches total user count), useGetVirtualCanisterCount (fetches canister inventory count), useGetAllUserStorageSummaries (fetches per-user storage metadata), and useGetMainCanisterCycleBalance (fetches cycle balance). Configure hooks with refetchInterval for real-time updates (e.g., 30 seconds), proper error handling, and loading states. Ensure hooks are only enabled when the user is authenticated and is an admin."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Display individual storage usage per user token in a table or list view on the Admin Dashboard, showing token ID, total storage used, and breakdown by category (photos, videos, documents, memories) in GB/TB format",
+      "acceptanceCriteria": [
+        "Table displays all user tokens with their storage metrics",
+        "Storage sizes are formatted in appropriate units (MB, GB, TB)",
+        "Category breakdown is visible for each token",
+        "Total aggregated storage is prominently displayed at the top"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/formatUtils.ts",
           "operation": "create",
-          "description": "Create a PIN reset component that guides users through re-authentication and setting a new PIN. Include explanation text about identity verification, a re-authentication button that triggers Internet Identity login, and a new PIN setup form (similar to PinSetup) that appears after successful re-authentication. Call saveCallerUserProfile to update the PIN field after verification. Use translations for all UI text."
+          "description": "Create utility functions for formatting storage sizes (bytes to MB/GB/TB with appropriate unit selection based on size), formatting principal IDs for display (truncated with ellipsis), and formatting cycle balances in human-readable format. These utilities will be used across admin dashboard components."
         },
         {
-          "path": "frontend/src/components/PinVerification.tsx",
+          "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "modify",
-          "description": "Add a 'Forgot PIN?' link that navigates to the PIN reset flow. Use a state or modal to show the PinReset component when the forgot link is clicked. Ensure the reset flow is accessible from the verification screen."
-        },
-        {
-          "path": "frontend/src/lib/translations.ts",
-          "operation": "modify",
-          "description": "Add English and Hindi translation keys for PIN reset including: reset title, re-authentication instructions, re-authentication button text, new PIN setup instructions, reset success message, and reset error messages."
+          "description": "Integrate AdminStorageTable component into the dashboard layout, passing fetched storage data from useGetAllUserStorageSummaries hook. Display total aggregated storage prominently at the top using formatted values from formatUtils. Ensure proper loading and error states are handled."
         }
       ]
     },
     {
-      "id": "REQ-18",
-      "summary": "Add Change PIN option in Profile settings with current PIN verification",
+      "id": "REQ-10",
+      "summary": "Add navigation to the Admin Dashboard from the main application navigation bar, visible only to users with the Master Principal ID",
       "acceptanceCriteria": [
-        "Change PIN option appears in Profile settings",
-        "User must enter current PIN before setting new PIN",
-        "New PIN must be confirmed with double entry",
-        "Success message confirms PIN change"
+        "Admin Dashboard link appears in the navigation bar only for the founder principal",
+        "Link navigates to the admin dashboard route",
+        "Regular users do not see the admin navigation option"
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/components/PinChangeForm.tsx",
-          "operation": "create",
-          "description": "Create a PIN change form component with three input fields: current PIN, new PIN, and confirm new PIN. Validate that current PIN is correct by calling verifyPin backend method, ensure new PIN meets requirements (4-6 digits), verify new PIN confirmation matches, and call the backend changePin method. Show success message after successful change and error messages for validation failures. Use translations for all UI text."
-        },
-        {
-          "path": "frontend/src/pages/ProfilePage.tsx",
-          "operation": "modify",
-          "description": "Add a 'Change PIN' section or button in the profile page that displays the PinChangeForm component. Position it below the profile picture and language preference sections. Use translations for the section title and instructions."
-        },
-        {
-          "path": "frontend/src/lib/translations.ts",
-          "operation": "modify",
-          "description": "Add English and Hindi translation keys for PIN change including: change PIN title, current PIN label, new PIN label, confirm new PIN label, PIN change success message, current PIN incorrect error, new PIN validation errors, and PIN mismatch error."
-        }
-      ]
-    },
-    {
-      "id": "REQ-19",
-      "summary": "Add English and Hindi translations for all PIN-related UI text",
-      "acceptanceCriteria": [
-        "All PIN screens display text in user's selected language",
-        "Translations include setup instructions, error messages, and success confirmations",
-        "Forgot PIN flow fully translated",
-        "Change PIN interface fully translated"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/translations.ts",
-          "operation": "modify",
-          "description": "Ensure comprehensive English and Hindi translations are added for all PIN-related UI elements across setup, verification, reset, and change flows. Include translations for titles, instructions, labels, button text, error messages, success messages, validation feedback, and help text. Organize translations under a 'pin' namespace for clarity."
-        }
-      ]
-    },
-    {
-      "id": "REQ-20",
-      "summary": "Implement session-based PIN authentication persisting across folder access",
-      "acceptanceCriteria": [
-        "PIN verification persists for the browser session",
-        "Session expires on logout or browser close",
-        "User must re-enter PIN after session expiration",
-        "Clear visual indicator shows when folders are unlocked"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/usePinSession.ts",
-          "operation": "modify",
-          "description": "Ensure the PIN session hook uses sessionStorage (not localStorage) to persist verification state only for the current browser session. Implement automatic session clearing on logout by integrating with the useInternetIdentity hook's clear method. Add a visual state indicator (isUnlocked) that components can use to show lock/unlock status."
-        },
         {
           "path": "frontend/src/components/Navigation.tsx",
           "operation": "modify",
-          "description": "Add a visual indicator in the navigation showing PIN unlock status. Display a lock icon when folders are locked and an unlock icon when PIN is verified. Use the usePinSession hook to check verification status. Position the indicator near the folder navigation items or in the header area."
+          "description": "Add a conditional Admin Dashboard navigation item that only renders when isCallerAdmin returns true. Position it after the Profile tab. Include an appropriate icon (use a shield or dashboard icon) and label. Wire the navigation item to route to the admin dashboard page. Use the authorization component's isCallerAdmin capability to control visibility."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Integrate PIN session clearing with the logout flow. When the user logs out via Internet Identity clear method, ensure the PIN session is also cleared by calling the appropriate method from usePinSession. This ensures the user must re-enter PIN after logging back in."
-        },
-        {
-          "path": "frontend/src/lib/translations.ts",
-          "operation": "modify",
-          "description": "Add English and Hindi translation keys for session status indicators including: folders locked message, folders unlocked message, session expired message, and re-enter PIN prompt."
+          "description": "Add routing for the Admin Dashboard page at path '/admin'. Import and render AdminDashboard component when the route matches. Ensure the route is protected by authentication (user must be logged in). The page-level principal verification will be handled within AdminDashboard component itself."
         }
       ]
     }

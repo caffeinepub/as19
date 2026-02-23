@@ -1,16 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Add PIN-based folder access control with setup, verification, change, and forgot PIN functionality to secure Photos, Videos, Documents, and Memories sections.
+**Goal:** Add a Master Admin Dashboard with real-time analytics and privacy-first monitoring for the AS19 MultiDrive platform.
 
 **Planned changes:**
-- Add PIN field to backend user profile with secure hashing
-- Create PIN setup screen during account creation requiring 4-6 digit PIN with confirmation
-- Implement PIN verification screen that blocks folder access until correct PIN entered
-- Add backend PIN verification endpoint with rate limiting
-- Create forgot PIN flow using identity re-verification
-- Add Change PIN option in Profile settings requiring current PIN verification
-- Implement session-based PIN authentication to avoid re-entry during active session
-- Add English and Hindi translations for all PIN-related UI text
+- Create backend methods to track and return user count, virtual canister count, storage metadata per user token, and cycle balance
+- Implement principal-based access control restricting all admin methods to the founder's Master Principal ID
+- Build a dark-themed Command Center Admin Dashboard displaying user analytics, canister inventory, storage insights with per-category breakdown, and network health metrics
+- Add React Query hooks to fetch and display real-time admin analytics
+- Display storage usage per token in table format with GB/TB formatting
+- Add Admin Dashboard navigation link visible only to the Master Principal ID
+- Ensure all admin methods expose only metadata (size, timestamp, token ID) without file content access
 
-**User-visible outcome:** Users create a PIN during account setup and must enter it to access their folders (Photos, Videos, Documents, Memories). They can change their PIN in settings or reset it through re-authentication if forgotten. PIN remains valid for the session.
+**User-visible outcome:** The founder can authenticate via Internet Identity and access a protected Admin Dashboard showing real-time platform analytics including total users, virtual canisters, aggregated storage distribution, individual user storage breakdowns, and cycle balance monitoring—all without accessing actual user file content.

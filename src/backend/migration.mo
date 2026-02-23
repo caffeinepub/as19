@@ -1,44 +1,82 @@
 import Map "mo:core/Map";
+import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
+import Time "mo:core/Time";
+import List "mo:core/List";
 import Storage "blob-storage/Storage";
 
 module {
-  type OldUserProfile = {
+  type Language = {
+    #english;
+    #hindi;
+  };
+
+  type UserProfile = {
     name : Text;
-    languagePreference : {
-      #english;
-      #hindi;
-    };
+    languagePreference : Language;
     profilePicture : ?Storage.ExternalBlob;
+    pin : Text;
+  };
+
+  type PhotoMetadata = {
+    id : Nat;
+    filename : Text;
+    uploadDate : Time.Time;
+    fileSize : Nat;
+    contentType : Text;
+    storageReference : Storage.ExternalBlob;
+    owner : Principal;
+  };
+
+  type DocumentMetadata = {
+    id : Nat;
+    filename : Text;
+    uploadDate : Time.Time;
+    fileSize : Nat;
+    contentType : Text;
+    storageReference : Storage.ExternalBlob;
+    owner : Principal;
+  };
+
+  type VideoMetadata = {
+    id : Nat;
+    filename : Text;
+    uploadDate : Time.Time;
+    fileSize : Nat;
+    contentType : Text;
+    storageReference : Storage.ExternalBlob;
+    thumbnailReference : ?Storage.ExternalBlob;
+    duration : ?Nat;
+    owner : Principal;
   };
 
   type OldActor = {
-    userProfiles : Map.Map<Principal, OldUserProfile>;
-  };
-
-  type NewUserProfile = {
-    name : Text;
-    languagePreference : {
-      #english;
-      #hindi;
-    };
-    profilePicture : ?Storage.ExternalBlob;
-    pin : Text; // New PIN field
+    nextPhotoId : Nat;
+    nextDocumentId : Nat;
+    nextVideoId : Nat;
+    userProfiles : Map.Map<Principal, UserProfile>;
+    photos : Map.Map<Nat, PhotoMetadata>;
+    documents : Map.Map<Nat, DocumentMetadata>;
+    videos : Map.Map<Nat, VideoMetadata>;
   };
 
   type NewActor = {
-    userProfiles : Map.Map<Principal, NewUserProfile>;
+    nextPhotoId : Nat;
+    nextDocumentId : Nat;
+    nextVideoId : Nat;
+    userProfiles : Map.Map<Principal, UserProfile>;
+    photos : Map.Map<Nat, PhotoMetadata>;
+    documents : Map.Map<Nat, DocumentMetadata>;
+    videos : Map.Map<Nat, VideoMetadata>;
+    _virtualCanisterCount : Nat;
   };
 
+  let _migrationVirtualCanisterCount : Nat = 0;
+
   public func run(old : OldActor) : NewActor {
-    let newUserProfiles = old.userProfiles.map<Principal, OldUserProfile, NewUserProfile>(
-      func(_principal, oldUserProfile) {
-        {
-          oldUserProfile with
-          pin = ""; // Set to empty PIN for existing users
-        };
-      }
-    );
-    { userProfiles = newUserProfiles };
+    {
+      old with
+      _virtualCanisterCount = _migrationVirtualCanisterCount;
+    };
   };
 };

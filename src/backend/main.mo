@@ -1,13 +1,13 @@
 import Map "mo:core/Map";
-import List "mo:core/List";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Nat "mo:core/Nat";
 import Time "mo:core/Time";
 import Text "mo:core/Text";
 import AccessControl "authorization/access-control";
-import Iter "mo:core/Iter";
+import List "mo:core/List";
 import Storage "blob-storage/Storage";
+import Iter "mo:core/Iter";
 import MixinStorage "blob-storage/Mixin";
 import Migration "migration";
 
@@ -133,7 +133,28 @@ actor {
     message : Text;
   };
 
-  // Storage limits (bytes)
+  public type StorageSummary = {
+    photosCount : Nat;
+    photosSize : Nat;
+    documentsCount : Nat;
+    documentsSize : Nat;
+    videosCount : Nat;
+    videosSize : Nat;
+    memoriesCount : Nat;
+    memoriesSize : Nat;
+  };
+
+  public type AggregateStorageSummary = {
+    totalPhotos : Nat;
+    totalPhotosSize : Nat;
+    totalDocuments : Nat;
+    totalDocumentsSize : Nat;
+    totalVideos : Nat;
+    totalVideosSize : Nat;
+    totalMemories : Nat;
+    totalMemoriesSize : Nat;
+  };
+
   var nextPhotoId = 0;
   var nextDocumentId = 0;
   var nextVideoId = 0;
@@ -149,11 +170,14 @@ actor {
   let maxVideoFileSize = 104_857_600; // 100 MB
   let maxProfilePictureSize = 10_485_760; // 10 MB
 
-  // Map initialization using explicit concrete types (workaround for Trent issue PT020)
+  // Map initialization using explicit concrete types
   var userProfiles = Map.empty<Principal, UserProfile>();
   var photos = Map.empty<Nat, PhotoMetadata>();
   var documents = Map.empty<Nat, DocumentMetadata>();
   var videos = Map.empty<Nat, VideoMetadata>();
+
+  // Mutable Variables to Track Counts
+  var _virtualCanisterCount = 0; // To replace `virtualCanisterIdCounter`
 
   // Helper functions for access control
   func requireAuthentication(caller : Principal) {
@@ -174,7 +198,105 @@ actor {
     };
   };
 
-  // Required AccessControl functions
+  // ADMIN-ONLY ANALYTICS METHODS
+  public query ({ caller }) func getUniqueUserProfileCount() : async Nat {
+    requireAdmin(caller);
+    userProfiles.size();
+  };
+
+  // Method to get virtual canister count
+  public query ({ caller }) func getVirtualCanisterCount() : async Nat {
+    requireAdmin(caller);
+    _virtualCanisterCount;
+  };
+
+  // Method to fetch storage summary for a specific user
+  public query ({ caller }) func getUserStorageSummary(principal : Principal) : async StorageSummary {
+    requireAdmin(caller);
+
+    let photosCount = photos.values().toArray().filter(
+      func(photo) {
+        photo.owner == principal;
+      }
+    ).size();
+
+    let photosSize = photos.values().toArray().filter(
+      func(photo) { photo.owner == principal }
+    ).foldLeft(
+      0,
+      func(acc, photo) { acc + photo.fileSize },
+    );
+
+    let documentsCount = documents.values().toArray().filter(
+      func(document) { document.owner == principal }
+    ).size();
+
+    let documentsSize = documents.values().toArray().filter(
+      func(document) { document.owner == principal }
+    ).foldLeft(
+      0,
+      func(acc, document) { acc + document.fileSize },
+    );
+
+    let videosCount = videos.values().toArray().filter(
+      func(video) { video.owner == principal }
+    ).size();
+
+    let videosSize = videos.values().toArray().filter(
+      func(video) { video.owner == principal }
+    ).foldLeft(
+      0,
+      func(acc, video) { acc + video.fileSize },
+    );
+
+    {
+      photosCount;
+      photosSize;
+      documentsCount;
+      documentsSize;
+      videosCount;
+      videosSize;
+      memoriesCount = 0;
+      memoriesSize = 0;
+    };
+  };
+
+  // Aggregate Storage Summary for all files/books
+  public query ({ caller }) func getAggregateStorageSummary() : async AggregateStorageSummary {
+    requireAdmin(caller);
+
+    let totalPhotos = photos.size();
+    let totalPhotosSize = photos.values().toArray().foldLeft(
+      0,
+      func(acc, photo) { acc + photo.fileSize },
+    );
+
+    let totalDocuments = documents.size();
+    let totalDocumentsSize = documents.values().toArray().foldLeft(
+      0,
+      func(acc, document) { acc + document.fileSize },
+    );
+
+    let totalVideos = videos.size();
+    let totalVideosSize = videos.values().toArray().foldLeft(
+      0,
+      func(acc, video) { acc + video.fileSize },
+    );
+
+    {
+      totalPhotos;
+      totalPhotosSize;
+      totalDocuments;
+      totalDocumentsSize;
+      totalVideos;
+      totalVideosSize;
+      totalMemories = 0;
+      totalMemoriesSize = 0;
+    };
+  };
+
+  // PUBLIC METHODS (rest of code unchanged)
+
   public shared ({ caller }) func initializeAccessControl() : async () {
     AccessControl.initialize(accessControlState, caller);
   };
@@ -184,7 +306,6 @@ actor {
   };
 
   public shared ({ caller }) func assignCallerUserRole(user : Principal, role : AccessControl.UserRole) : async () {
-    // Admin-only check happens inside AccessControl.assignRole
     AccessControl.assignRole(accessControlState, caller, user, role);
   };
 
@@ -192,7 +313,6 @@ actor {
     AccessControl.isAdmin(accessControlState, caller);
   };
 
-  // User Profile Management
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
     requireUser(caller);
     userProfiles.add(caller, profile);
@@ -227,7 +347,6 @@ actor {
     userProfiles.add(caller, updatedProfile);
   };
 
-  // PIN Management - requires user authentication
   public shared ({ caller }) func verifyPin(pin : Text) : async Bool {
     requireUser(caller);
 
@@ -237,7 +356,6 @@ actor {
     };
   };
 
-  // Change PIN method - requires user authentication and current PIN verification
   public shared ({ caller }) func changePin(currentPin : Text, newPin : Text) : async () {
     requireUser(caller);
 
@@ -246,7 +364,6 @@ actor {
       case (?profile) { profile };
     };
 
-    // Verify current PIN before allowing change
     if (currentProfile.pin != currentPin) {
       Runtime.trap("Current PIN is incorrect. Please try again.");
     };
@@ -258,7 +375,25 @@ actor {
     userProfiles.add(caller, updatedProfile);
   };
 
-  // Language Preference Methods
+  public shared ({ caller }) func resetPin(principalToUpdate : Principal, newPin : Text) : async () {
+    requireUser(caller);
+
+    if (caller != principalToUpdate) {
+      Runtime.trap("Unauthorized: Cannot reset PIN for another user");
+    };
+
+    switch (userProfiles.get(principalToUpdate)) {
+      case (null) { Runtime.trap("No profile found for the given principal") };
+      case (?oldProfile) {
+        let updatedProfile = {
+          oldProfile with
+          pin = newPin;
+        };
+        userProfiles.add(principalToUpdate, updatedProfile);
+      };
+    };
+  };
+
   public query ({ caller }) func getUserLanguagePreference() : async Language {
     requireUser(caller);
     switch (userProfiles.get(caller)) {
@@ -287,8 +422,6 @@ actor {
     userProfiles.add(caller, existingProfile);
   };
 
-  // Video Management
-  // Regular users can only access their own videos
   public query ({ caller }) func getVideos() : async VideosResponse {
     requireUser(caller);
 
@@ -310,7 +443,6 @@ actor {
       case (null) { Runtime.trap("Video not found") };
       case (?v) { v };
     };
-    // Users can only access their own videos, admins can access all
     if (not Principal.equal(video.owner, caller) and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: You can only access your own videos");
     };
@@ -321,7 +453,6 @@ actor {
     requireUser(caller);
   };
 
-  // Admin-only Video Upload
   public shared ({ caller }) func uploadVideo(request : VideoUploadRequest) : async VideoUploadResponse {
     requireAdmin(caller);
 
@@ -356,7 +487,6 @@ actor {
     };
   };
 
-  // Bulk video upload (admin only)
   public shared ({ caller }) func uploadMultipleVideos(request : {
     videos : [VideoUploadRequest];
   }) : async BulkVideoUploadResponse {
@@ -373,7 +503,6 @@ actor {
         Runtime.trap("File size for " # video.filename # " exceeds 100 MB limit");
       };
 
-      // Check if each video maintains videoStorageLimit
       let newTotal = getTotalVideoSize() + video.fileSize;
       if (newTotal > videoStorageLimit) {
         Runtime.trap("Cannot upload " # video.filename # ". Total size exceeds video storage limit");
@@ -396,7 +525,6 @@ actor {
       nextVideoId += 1;
     };
 
-    // Return array of videoIds
     {
       successCount = videoIdArray.size();
       videoIds = videoIdArray;
@@ -405,7 +533,6 @@ actor {
     };
   };
 
-  // Admin-only video deletion
   public shared ({ caller }) func deleteVideo(videoId : Nat) : async {
     message : Text;
   } {
@@ -420,7 +547,6 @@ actor {
     };
   };
 
-  // Storage management helpers
   public query ({ caller }) func getVideoStorageUsage() : async Nat {
     requireUser(caller);
     getTotalVideoSize();
@@ -435,7 +561,6 @@ actor {
     total;
   };
 
-  // Photo Management - users can manage their own photos
   public shared ({ caller }) func uploadPhoto(request : PhotoUploadRequest) : async Nat {
     requireUser(caller);
 
@@ -462,7 +587,6 @@ actor {
     photo.id;
   };
 
-  // Bulk photo upload method
   public shared ({ caller }) func uploadMultiplePhotos(request : BulkPhotoUploadRequest) : async [Nat] {
     requireUser(caller);
 
@@ -478,7 +602,6 @@ actor {
         Runtime.trap("File size for " # photo.filename # " exceeds 15MB limit");
       };
 
-      // Check if each photo maintains photoStorageLimit
       if ((totalUploadSize + photo.fileSize) > photoStorageLimit) {
         Runtime.trap("Cannot upload " # photo.filename # ". Total size exceeds photo storage limit");
       };
@@ -499,7 +622,6 @@ actor {
       nextPhotoId += 1;
     };
 
-    // Return array of photoIds
     ids;
   };
 
@@ -509,7 +631,6 @@ actor {
       case (null) { Runtime.trap("Photo not found") };
       case (?p) { p };
     };
-    // Users can only access their own photos, admins can access all
     if (not Principal.equal(photo.owner, caller) and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: You can only access your own photos");
     };
@@ -536,7 +657,6 @@ actor {
       case (?p) { p };
     };
 
-    // Only the owner can delete their photo (admins cannot delete user photos)
     if (existingPhoto.owner != caller) {
       Runtime.trap("Unauthorized: You can only delete your own photos");
     };

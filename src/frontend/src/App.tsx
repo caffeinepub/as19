@@ -11,6 +11,7 @@ import MemoriesPage from './pages/MemoriesPage';
 import MediaCenterPage from './pages/MediaCenterPage';
 import StorageDashboardPage from './pages/StorageDashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
 import ProfileSetup from './components/ProfileSetup';
 import PinSetup from './components/PinSetup';
 import LanguageSelector from './components/LanguageSelector';
@@ -129,6 +130,9 @@ export default function App() {
           )}
           {activeSection === 'profile' && (
             <ProfilePage userProfile={safeUserProfile} onLogout={handleLogout} />
+          )}
+          {activeSection === 'admin' && (
+            <AdminDashboard />
           )}
         </main>
       </div>

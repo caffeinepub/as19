@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useSaveCallerUserProfile, useGetCallerUserProfile } from '../hooks/useQueries';
+import { useResetPin } from '../hooks/useQueries';
+import { usePinSession } from '../hooks/usePinSession';
 import { useLanguage } from '../hooks/useLanguage';
 import { useTranslations } from '../lib/translations';
 import { Button } from '@/components/ui/button';
@@ -18,13 +19,21 @@ interface PinResetProps {
 export default function PinReset({ onBack }: PinResetProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
-  const { login, loginStatus } = useInternetIdentity();
-  const { data: userProfile } = useGetCallerUserProfile();
-  const saveProfile = useSaveCallerUserProfile();
+  const { login, loginStatus, identity } = useInternetIdentity();
+  const resetPin = useResetPin();
+  const { clearSession } = usePinSession();
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isReauthenticated, setIsReauthenticated] = useState(false);
+  const [originalPrincipal, setOriginalPrincipal] = useState<string | null>(null);
+
+  // Store the original principal when component mounts
+  useEffect(() => {
+    if (identity) {
+      setOriginalPrincipal(identity.getPrincipal().toString());
+    }
+  }, []);
 
   const isPinValid = newPin.length >= 4 && newPin.length <= 6 && /^\d+$/.test(newPin);
   const pinsMatch = newPin === confirmNewPin && confirmNewPin.length > 0;
@@ -33,11 +42,28 @@ export default function PinReset({ onBack }: PinResetProps) {
   const handleReauthenticate = async () => {
     try {
       await login();
-      setIsReauthenticated(true);
-      toast.success(t('pin.reauthSuccess'));
+      
+      // After successful login, verify the principal matches
+      if (identity) {
+        const newPrincipal = identity.getPrincipal().toString();
+        if (originalPrincipal && newPrincipal !== originalPrincipal) {
+          const error = language === 'hindi'
+            ? 'प्रिंसिपल मेल नहीं खाता - कृपया वही खाता उपयोग करें'
+            : 'Principal mismatch - please use the same account';
+          setErrorMessage(error);
+          toast.error(error);
+          return;
+        }
+        setIsReauthenticated(true);
+        toast.success(t('pin.reauthSuccess'));
+      }
     } catch (error: any) {
       console.error('Reauthentication error:', error);
-      toast.error(t('pin.reauthError'));
+      const errorMsg = language === 'hindi'
+        ? 'प्रमाणीकरण विफल - कृपया पुनः प्रयास करें'
+        : 'Authentication failed - please try again';
+      setErrorMessage(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -59,21 +85,33 @@ export default function PinReset({ onBack }: PinResetProps) {
       return;
     }
 
+    if (!identity) {
+      const error = language === 'hindi'
+        ? 'पहचान उपलब्ध नहीं है'
+        : 'Identity not available';
+      setErrorMessage(error);
+      toast.error(error);
+      return;
+    }
+
     try {
-      await saveProfile.mutateAsync({
-        name: userProfile?.name || 'User',
-        languagePreference: language,
-        pin: newPin,
-      });
+      const principalToUpdate = identity.getPrincipal();
+      await resetPin.mutateAsync({ principalToUpdate, newPin });
       toast.success(t('pin.resetSuccess'));
-      // Clear session storage to require new PIN entry
-      sessionStorage.removeItem('pin_verified');
+      clearSession();
       onBack();
     } catch (error: any) {
       console.error('PIN reset error:', error);
-      const errorMsg = language === 'hindi'
+      let errorMsg = language === 'hindi'
         ? 'पिन रीसेट में त्रुटि। कृपया पुनः प्रयास करें।'
         : 'Error resetting PIN. Please try again.';
+      
+      if (error?.message?.includes('Unauthorized')) {
+        errorMsg = language === 'hindi'
+          ? 'अनधिकृत - कृपया फिर से लॉगिन करें'
+          : 'Unauthorized - please log in again';
+      }
+      
       setErrorMessage(errorMsg);
       toast.error(errorMsg);
     }
@@ -111,6 +149,15 @@ export default function PinReset({ onBack }: PinResetProps) {
                   {t('pin.reauthRequired')}
                 </AlertDescription>
               </Alert>
+
+              {errorMessage && (
+                <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    {errorMessage}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Button
                 onClick={handleReauthenticate}
@@ -161,7 +208,7 @@ export default function PinReset({ onBack }: PinResetProps) {
                   }}
                   className="text-lg py-6 rounded-xl text-center tracking-widest"
                   autoFocus
-                  disabled={saveProfile.isPending}
+                  disabled={resetPin.isPending}
                   maxLength={6}
                 />
                 {newPin.length > 0 && (
@@ -200,7 +247,7 @@ export default function PinReset({ onBack }: PinResetProps) {
                     }
                   }}
                   className="text-lg py-6 rounded-xl text-center tracking-widest"
-                  disabled={saveProfile.isPending}
+                  disabled={resetPin.isPending}
                   maxLength={6}
                 />
                 {confirmNewPin.length > 0 && (
@@ -223,9 +270,9 @@ export default function PinReset({ onBack }: PinResetProps) {
               <Button
                 type="submit"
                 className="w-full py-6 text-lg font-semibold rounded-xl"
-                disabled={saveProfile.isPending || !canSubmit}
+                disabled={resetPin.isPending || !canSubmit}
               >
-                {saveProfile.isPending ? (
+                {resetPin.isPending ? (
                   <>
                     <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
                     {t('pin.resetting')}

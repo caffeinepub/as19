@@ -13,7 +13,8 @@ import {
   LogOut,
   Lock,
   Unlock,
-  Grid3x3
+  Grid3x3,
+  Shield
 } from 'lucide-react';
 import { UserProfile } from '../backend';
 
@@ -36,6 +37,8 @@ export default function Navigation({
   const t = useTranslations(language);
   const { isVerified } = usePinSession();
 
+  const isHindi = language === 'hindi';
+
   const navItems = [
     { id: 'media', label: 'Media Center', icon: Grid3x3 },
     { id: 'photos', label: t('nav.photos'), icon: Image },
@@ -45,6 +48,15 @@ export default function Navigation({
     { id: 'storage', label: t('nav.storage'), icon: Database },
     { id: 'profile', label: t('nav.profile'), icon: User },
   ];
+
+  // Add admin dashboard link only for admin users
+  if (isAdmin) {
+    navItems.push({
+      id: 'admin',
+      label: isHindi ? 'एडमिन' : 'Admin',
+      icon: Shield,
+    });
+  }
 
   const profilePictureUrl = userProfile?.profilePicture?.getDirectURL();
 

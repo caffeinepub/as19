@@ -1,16 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
-import type { UserProfile, PhotoMetadata, PhotoUploadRequest, BulkPhotoUploadRequest, VideoMetadata, VideoUploadRequest, Language } from '../backend';
+import type { UserProfile, PhotoMetadata, PhotoUploadRequest, BulkPhotoUploadRequest, VideoMetadata, VideoUploadRequest, Language, AggregateStorageSummary, StorageSummary } from '../backend';
 import type { DocumentMetadata, DocumentUploadRequest, MemoryMetadata, MemoryUploadRequest, EditMemoryRequest } from '../types/frontend-types';
 import { ExternalBlob } from '../backend';
 import { toast } from 'sonner';
+import { Principal } from '@icp-sdk/core/principal';
 
 // Sync configuration
 const SYNC_INTERVALS = {
   active: 10000,      // 10 seconds when user is active
   idle: 30000,        // 30 seconds when user is idle
   background: 60000,  // 60 seconds for background sync
+  admin: 30000,       // 30 seconds for admin dashboard
+};
+
+// Storage limits (in bytes)
+const STORAGE_LIMITS = {
+  photos: 6_442_450_944,      // ~6 GB
+  videos: 6_442_450_944,      // ~6 GB
+  documents: 6_442_450_944,   // ~6 GB
+  memories: 2_147_483_648,    // ~2 GB
 };
 
 // User Profile Queries
@@ -119,6 +129,154 @@ export function useIsCallerAdmin() {
   });
 }
 
+// Admin Analytics Queries
+export function useGetUniqueUserProfileCount() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<bigint>({
+    queryKey: ['adminUserCount'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.getUniqueUserProfileCount();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: SYNC_INTERVALS.admin,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
+export function useGetVirtualCanisterCount() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<bigint>({
+    queryKey: ['adminCanisterCount'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.getVirtualCanisterCount();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: SYNC_INTERVALS.admin,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
+export function useGetAggregateStorageSummary() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<AggregateStorageSummary>({
+    queryKey: ['adminAggregateStorage'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.getAggregateStorageSummary();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: SYNC_INTERVALS.admin,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
+export function useGetUserStorageSummary(principal: Principal | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<StorageSummary>({
+    queryKey: ['adminUserStorage', principal?.toString()],
+    queryFn: async () => {
+      if (!actor || !principal) throw new Error('Actor or principal not available');
+      return await actor.getUserStorageSummary(principal);
+    },
+    enabled: !!actor && !actorFetching && !!identity && !!principal,
+    refetchInterval: SYNC_INTERVALS.admin,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
+// Storage Metrics Query (for compatibility with existing components)
+export function useGetStorageMetrics() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery({
+    queryKey: ['storageMetrics'],
+    queryFn: async () => {
+      if (!actor) {
+        return {
+          photos: {
+            used: BigInt(0),
+            limit: BigInt(STORAGE_LIMITS.photos),
+            percentage: 0,
+          },
+          videos: {
+            used: BigInt(0),
+            limit: BigInt(STORAGE_LIMITS.videos),
+            percentage: 0,
+          },
+          documents: {
+            used: BigInt(0),
+            limit: BigInt(STORAGE_LIMITS.documents),
+            percentage: 0,
+          },
+          memories: {
+            used: BigInt(0),
+            limit: BigInt(STORAGE_LIMITS.memories),
+            percentage: 0,
+          },
+          totalUsed: BigInt(0),
+        };
+      }
+      
+      const [photosUsed, videosUsed] = await Promise.all([
+        actor.getPhotoStorageUsage(),
+        actor.getVideoStorageUsage(),
+      ]);
+
+      const documentsUsed = BigInt(0);
+      const memoriesUsed = BigInt(0);
+      const totalUsed = photosUsed + videosUsed + documentsUsed + memoriesUsed;
+
+      const photosPercentage = Number(photosUsed) / STORAGE_LIMITS.photos * 100;
+      const videosPercentage = Number(videosUsed) / STORAGE_LIMITS.videos * 100;
+      const documentsPercentage = Number(documentsUsed) / STORAGE_LIMITS.documents * 100;
+      const memoriesPercentage = Number(memoriesUsed) / STORAGE_LIMITS.memories * 100;
+
+      return {
+        photos: {
+          used: photosUsed,
+          limit: BigInt(STORAGE_LIMITS.photos),
+          percentage: photosPercentage,
+        },
+        videos: {
+          used: videosUsed,
+          limit: BigInt(STORAGE_LIMITS.videos),
+          percentage: videosPercentage,
+        },
+        documents: {
+          used: documentsUsed,
+          limit: BigInt(STORAGE_LIMITS.documents),
+          percentage: documentsPercentage,
+        },
+        memories: {
+          used: memoriesUsed,
+          limit: BigInt(STORAGE_LIMITS.memories),
+          percentage: memoriesPercentage,
+        },
+        totalUsed,
+      };
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: SYNC_INTERVALS.active,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+}
+
 // PIN Management Queries
 export function useVerifyPin() {
   const { actor } = useActor();
@@ -133,11 +291,30 @@ export function useVerifyPin() {
 
 export function useChangePin() {
   const { actor } = useActor();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ currentPin, newPin }: { currentPin: string; newPin: string }) => {
       if (!actor) throw new Error('Actor not available');
       return await actor.changePin(currentPin, newPin);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+export function useResetPin() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ principalToUpdate, newPin }: { principalToUpdate: Principal; newPin: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.resetPin(principalToUpdate, newPin);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
     },
   });
 }
@@ -218,6 +395,7 @@ export function useUploadPhoto() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photos', identity?.getPrincipal().toString()] });
       queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
+      queryClient.invalidateQueries({ queryKey: ['adminAggregateStorage'] });
     },
     onError: (error: any) => {
       if (error.message?.includes('Unauthorized') || error.message?.includes('Authentication required')) {
@@ -241,6 +419,7 @@ export function useUploadMultiplePhotos() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photos', identity?.getPrincipal().toString()] });
       queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
+      queryClient.invalidateQueries({ queryKey: ['adminAggregateStorage'] });
     },
     onError: (error: any) => {
       if (error.message?.includes('Unauthorized') || error.message?.includes('Authentication required')) {
@@ -264,11 +443,13 @@ export function useDeletePhoto() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photos', identity?.getPrincipal().toString()] });
       queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
+      queryClient.invalidateQueries({ queryKey: ['adminAggregateStorage'] });
     },
     onError: (error: any) => {
       if (error.message?.includes('Unauthorized') || error.message?.includes('can only delete your own')) {
-        toast.error('आप केवल अपनी फ़ोटो डिलीट कर सकते हैं');
-      } else if (error.message?.includes('Authentication required')) {
+        toast.error('आप केवल अपनी फ़ोटो हटा सकते हैं');
+      }
+      if (error.message?.includes('Authentication required')) {
         toast.error('कृपया फिर से लॉगिन करें');
         queryClient.clear();
       }
@@ -276,70 +457,45 @@ export function useDeletePhoto() {
   });
 }
 
-// Video Queries with Real-Time Sync and Authorization Error Handling
-export function useGetAllVideos() {
+export function useGetPhotoStorageUsage() {
   const { actor, isFetching: actorFetching } = useActor();
   const { identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
 
-  return useQuery<VideoMetadata[]>({
-    queryKey: ['videos', identity?.getPrincipal().toString()],
+  return useQuery<bigint>({
+    queryKey: ['photoStorageUsage'],
     queryFn: async () => {
-      if (!actor) return [];
-      try {
-        const response = await actor.getVideos();
-        return response.videos;
-      } catch (error: any) {
-        // Handle authorization errors gracefully
-        if (error.message?.includes('Unauthorized') || error.message?.includes('Authentication required')) {
-          toast.error('कृपया फिर से लॉगिन करें');
-          queryClient.clear();
-          return [];
-        }
-        throw error;
-      }
+      if (!actor) return BigInt(0);
+      return await actor.getPhotoStorageUsage();
     },
     enabled: !!actor && !actorFetching && !!identity,
     refetchInterval: SYNC_INTERVALS.active,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    staleTime: 5000,
   });
 }
 
-export function useGetVideoMetadata(videoId: bigint | null) {
+// Video Queries
+export function useGetVideos() {
   const { actor, isFetching: actorFetching } = useActor();
   const { identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
 
-  return useQuery<VideoMetadata | null>({
-    queryKey: ['video', videoId?.toString(), identity?.getPrincipal().toString()],
+  return useQuery<VideoMetadata[]>({
+    queryKey: ['videos', identity?.getPrincipal().toString()],
     queryFn: async () => {
-      if (!actor || !videoId) return null;
-      try {
-        return await actor.getVideo(videoId);
-      } catch (error: any) {
-        // Handle authorization errors gracefully
-        if (error.message?.includes('Unauthorized') || error.message?.includes('can only access your own')) {
-          toast.error('आप केवल अपने वीडियो देख सकते हैं');
-          return null;
-        }
-        if (error.message?.includes('Authentication required')) {
-          toast.error('कृपया फिर से लॉगिन करें');
-          queryClient.clear();
-          return null;
-        }
-        throw error;
-      }
+      if (!actor) return [];
+      const response = await actor.getVideos();
+      return response.videos;
     },
-    enabled: !!actor && !actorFetching && videoId !== null && !!identity,
+    enabled: !!actor && !actorFetching && !!identity,
     refetchInterval: SYNC_INTERVALS.active,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
 }
 
-// Video Mutations
+// Alias for compatibility
+export const useGetAllVideos = useGetVideos;
+
 export function useUploadVideo() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -353,14 +509,25 @@ export function useUploadVideo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos', identity?.getPrincipal().toString()] });
       queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
+      queryClient.invalidateQueries({ queryKey: ['adminAggregateStorage'] });
     },
-    onError: (error: any) => {
-      if (error.message?.includes('Unauthorized') || error.message?.includes('Admin access required')) {
-        toast.error('केवल एडमिन वीडियो अपलोड कर सकते हैं');
-      } else if (error.message?.includes('Authentication required')) {
-        toast.error('कृपया फिर से लॉगिन करें');
-        queryClient.clear();
-      }
+  });
+}
+
+export function useUploadMultipleVideos() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  const { identity } = useInternetIdentity();
+
+  return useMutation({
+    mutationFn: async (videos: VideoUploadRequest[]) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.uploadMultipleVideos({ videos });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos', identity?.getPrincipal().toString()] });
+      queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
+      queryClient.invalidateQueries({ queryKey: ['adminAggregateStorage'] });
     },
   });
 }
@@ -378,43 +545,49 @@ export function useDeleteVideo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos', identity?.getPrincipal().toString()] });
       queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
-    },
-    onError: (error: any) => {
-      if (error.message?.includes('Unauthorized') || error.message?.includes('Admin access required')) {
-        toast.error('केवल एडमिन वीडियो डिलीट कर सकते हैं');
-      } else if (error.message?.includes('Authentication required')) {
-        toast.error('कृपया फिर से लॉगिन करें');
-        queryClient.clear();
-      }
+      queryClient.invalidateQueries({ queryKey: ['adminAggregateStorage'] });
     },
   });
 }
 
-// Document Queries (placeholder - backend not implemented yet)
-export function useGetAllDocuments() {
+export function useGetVideoStorageUsage() {
+  const { actor, isFetching: actorFetching } = useActor();
   const { identity } = useInternetIdentity();
 
-  return useQuery<DocumentMetadata[]>({
-    queryKey: ['documents'],
+  return useQuery<bigint>({
+    queryKey: ['videoStorageUsage'],
     queryFn: async () => {
-      // Backend not implemented yet
-      return [];
+      if (!actor) return BigInt(0);
+      return await actor.getVideoStorageUsage();
     },
-    enabled: !!identity,
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchInterval: SYNC_INTERVALS.active,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 
-// Document Mutations (placeholder - backend not implemented yet)
+// Document Queries (Frontend-only placeholders)
+export function useGetDocuments() {
+  return useQuery<DocumentMetadata[]>({
+    queryKey: ['documents'],
+    queryFn: async () => [],
+    enabled: false,
+  });
+}
+
+// Alias for compatibility
+export const useGetAllDocuments = useGetDocuments;
+
 export function useUploadDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (request: DocumentUploadRequest) => {
+    mutationFn: async (_request: DocumentUploadRequest) => {
       throw new Error('Document upload not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
     },
   });
 }
@@ -423,116 +596,65 @@ export function useDeleteDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (documentId: bigint) => {
+    mutationFn: async (_documentId: bigint) => {
       throw new Error('Document deletion not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
     },
   });
 }
 
-// Memory Queries (placeholder - backend not implemented yet)
-export function useGetAllMemories() {
-  const { identity } = useInternetIdentity();
-
+// Memory Queries (Frontend-only placeholders)
+export function useGetMemories() {
   return useQuery<MemoryMetadata[]>({
     queryKey: ['memories'],
-    queryFn: async () => {
-      // Backend not implemented yet
-      return [];
-    },
-    enabled: !!identity,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
-// Memory Mutations (placeholder - backend not implemented yet)
+// Alias for compatibility
+export const useGetAllMemories = useGetMemories;
+
 export function useCreateMemory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (request: MemoryUploadRequest) => {
+    mutationFn: async (_request: MemoryUploadRequest) => {
       throw new Error('Memory creation not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
     },
   });
 }
 
-export function useUpdateMemory() {
+export function useEditMemory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (request: EditMemoryRequest) => {
-      throw new Error('Memory update not yet implemented in backend');
+    mutationFn: async (_request: EditMemoryRequest) => {
+      throw new Error('Memory editing not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
     },
   });
 }
+
+// Alias for compatibility
+export const useUpdateMemory = useEditMemory;
 
 export function useDeleteMemory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (memoryId: bigint) => {
+    mutationFn: async (_memoryId: bigint) => {
       throw new Error('Memory deletion not yet implemented in backend');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      queryClient.invalidateQueries({ queryKey: ['storageMetrics'] });
     },
-  });
-}
-
-// Storage Metrics Query with Real-Time Sync
-export function useGetStorageMetrics() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery({
-    queryKey: ['storageMetrics'],
-    queryFn: async () => {
-      if (!actor) return null;
-      
-      // Calculate storage metrics from photos and videos (documents and memories not yet implemented)
-      const photoUsage = await actor.getPhotoStorageUsage();
-      const videoUsage = await actor.getVideoStorageUsage();
-      
-      // Storage allocations (in bytes) - 30% each for 4 categories = ~6.44 GB each
-      const categoryLimit = BigInt(Math.floor(21474836480 * 0.30)); // 30% of 21.47 GB
-      
-      return {
-        photos: {
-          used: photoUsage,
-          limit: categoryLimit,
-          percentage: Number(photoUsage) / Number(categoryLimit) * 100,
-        },
-        videos: {
-          used: videoUsage,
-          limit: categoryLimit,
-          percentage: Number(videoUsage) / Number(categoryLimit) * 100,
-        },
-        documents: {
-          used: BigInt(0),
-          limit: categoryLimit,
-          percentage: 0,
-        },
-        memories: {
-          used: BigInt(0),
-          limit: categoryLimit,
-          percentage: 0,
-        },
-      };
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-    refetchInterval: SYNC_INTERVALS.idle,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    staleTime: 10000,
   });
 }

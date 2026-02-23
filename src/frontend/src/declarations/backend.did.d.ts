@@ -10,6 +10,16 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AggregateStorageSummary {
+  'totalPhotosSize' : bigint,
+  'totalVideosSize' : bigint,
+  'totalVideos' : bigint,
+  'totalMemoriesSize' : bigint,
+  'totalPhotos' : bigint,
+  'totalMemories' : bigint,
+  'totalDocumentsSize' : bigint,
+  'totalDocuments' : bigint,
+}
 export interface BulkPhotoUploadRequest { 'photos' : Array<PhotoUploadRequest> }
 export interface BulkVideoUploadResponse {
   'errors' : Array<string>,
@@ -34,6 +44,16 @@ export interface PhotoUploadRequest {
   'contentType' : string,
   'fileSize' : bigint,
   'filename' : string,
+}
+export interface StorageSummary {
+  'videosCount' : bigint,
+  'photosSize' : bigint,
+  'memoriesSize' : bigint,
+  'memoriesCount' : bigint,
+  'documentsSize' : bigint,
+  'videosSize' : bigint,
+  'photosCount' : bigint,
+  'documentsCount' : bigint,
 }
 export type Time = bigint;
 export interface UserProfile {
@@ -101,18 +121,23 @@ export interface _SERVICE {
   'deletePhoto' : ActorMethod<[bigint], undefined>,
   'deleteVideo' : ActorMethod<[bigint], { 'message' : string }>,
   'downloadVideo' : ActorMethod<[bigint], undefined>,
+  'getAggregateStorageSummary' : ActorMethod<[], AggregateStorageSummary>,
   'getAllPhotos' : ActorMethod<[], Array<PhotoMetadata>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getPhotoMetadata' : ActorMethod<[bigint], PhotoMetadata>,
   'getPhotoStorageUsage' : ActorMethod<[], bigint>,
+  'getUniqueUserProfileCount' : ActorMethod<[], bigint>,
   'getUserLanguagePreference' : ActorMethod<[], Language>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getUserStorageSummary' : ActorMethod<[Principal], StorageSummary>,
   'getVideo' : ActorMethod<[bigint], VideoMetadata>,
   'getVideoStorageUsage' : ActorMethod<[], bigint>,
   'getVideos' : ActorMethod<[], VideosResponse>,
+  'getVirtualCanisterCount' : ActorMethod<[], bigint>,
   'initializeAccessControl' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'resetPin' : ActorMethod<[Principal, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setUserLanguagePreference' : ActorMethod<[Language], undefined>,
   'updateProfilePicture' : ActorMethod<[[] | [ExternalBlob]], undefined>,

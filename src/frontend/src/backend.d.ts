@@ -20,12 +20,32 @@ export interface PhotoUploadRequest {
     fileSize: bigint;
     filename: string;
 }
+export interface AggregateStorageSummary {
+    totalPhotosSize: bigint;
+    totalVideosSize: bigint;
+    totalVideos: bigint;
+    totalMemoriesSize: bigint;
+    totalPhotos: bigint;
+    totalMemories: bigint;
+    totalDocumentsSize: bigint;
+    totalDocuments: bigint;
+}
 export type Time = bigint;
 export interface BulkVideoUploadResponse {
     errors: Array<string>;
     successCount: bigint;
     message: string;
     videoIds: Array<bigint>;
+}
+export interface StorageSummary {
+    videosCount: bigint;
+    photosSize: bigint;
+    memoriesSize: bigint;
+    memoriesCount: bigint;
+    documentsSize: bigint;
+    videosSize: bigint;
+    photosCount: bigint;
+    documentsCount: bigint;
 }
 export interface PhotoMetadata {
     id: bigint;
@@ -89,18 +109,23 @@ export interface backendInterface {
         message: string;
     }>;
     downloadVideo(_videoId: bigint): Promise<void>;
+    getAggregateStorageSummary(): Promise<AggregateStorageSummary>;
     getAllPhotos(): Promise<Array<PhotoMetadata>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getPhotoMetadata(photoId: bigint): Promise<PhotoMetadata>;
     getPhotoStorageUsage(): Promise<bigint>;
+    getUniqueUserProfileCount(): Promise<bigint>;
     getUserLanguagePreference(): Promise<Language>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserStorageSummary(principal: Principal): Promise<StorageSummary>;
     getVideo(videoId: bigint): Promise<VideoMetadata>;
     getVideoStorageUsage(): Promise<bigint>;
     getVideos(): Promise<VideosResponse>;
+    getVirtualCanisterCount(): Promise<bigint>;
     initializeAccessControl(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    resetPin(principalToUpdate: Principal, newPin: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setUserLanguagePreference(language: Language): Promise<void>;
     updateProfilePicture(pictureReference: ExternalBlob | null): Promise<void>;

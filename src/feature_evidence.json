@@ -2,12 +2,96 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-a-pin-setup-screen-that-appears-during-initial-account-creation-prompting-the-user-to-create-a-4-6-digit-pin-with-confirmation-entry",
-      "featureTitle": "Create a PIN setup screen that appears during initial account creation, prompting the user to create a 4-6 digit PIN with confirmation entry",
+      "featureId": "feature-create-an-admin-dashboard-page-component-accessible-only-to-authenticated-users-with-the-master-principal-id-displaying-user-count-canister-inventory-storage-insights-and-cycle-balance",
+      "featureTitle": "Create an Admin Dashboard page component accessible only to authenticated users with the Master Principal ID, displaying user count, canister inventory, storage insights, and cycle balance",
+      "files": [
+        "frontend/src/pages/AdminDashboard.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-design-the-admin-dashboard-with-a-dark-themed-command-center-interface-featuring-visual-counters-for-user-count-and-canister-inventory-progress-bars-showing-storage-distribution-across-categories-and-cycle-balance-indicators",
+      "featureTitle": "Design the Admin Dashboard with a dark-themed Command Center interface featuring visual counters for user count and canister inventory, progress bars showing storage distribution across categories, and cycle balance indicators",
+      "files": [
+        "frontend/src/components/AdminMetricCard.tsx",
+        "frontend/src/components/AdminStorageTable.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-react-query-hooks-to-fetch-admin-analytics-data-including-user-count-canister-count-storage-insights-and-cycle-balance-from-the-backend",
+      "featureTitle": "Create React Query hooks to fetch admin analytics data including user count, canister count, storage insights, and cycle balance from the backend",
+      "files": [
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-display-individual-storage-usage-per-user-token-in-a-table-or-list-view-on-the-admin-dashboard-showing-token-id-total-storage-used-and-breakdown-by-category-photos-videos-documents-memories-in-gb-tb-format",
+      "featureTitle": "Display individual storage usage per user token in a table or list view on the Admin Dashboard, showing token ID, total storage used, and breakdown by category (photos, videos, documents, memories) in GB/TB format",
+      "files": [
+        "frontend/src/pages/AdminDashboard.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-navigation-to-the-admin-dashboard-from-the-main-application-navigation-bar-visible-only-to-users-with-the-master-principal-id",
+      "featureTitle": "Add navigation to the Admin Dashboard from the main application navigation bar, visible only to users with the Master Principal ID",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/PinSetup.tsx",
-        "frontend/src/lib/translations.ts"
+        "frontend/src/components/Navigation.tsx"
       ],
       "components": [
         "authorization@3.0.0",
@@ -20,125 +104,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-14"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-pin-verification-screen-that-blocks-access-to-photos-videos-documents-and-memories-sections-until-correct-pin-is-entered",
-      "featureTitle": "Implement PIN verification screen that blocks access to Photos, Videos, Documents, and Memories sections until correct PIN is entered",
-      "files": [
-        "frontend/src/components/PinVerification.tsx",
-        "frontend/src/hooks/usePinSession.ts",
-        "frontend/src/lib/translations.ts",
-        "frontend/src/pages/DocumentsPage.tsx",
-        "frontend/src/pages/MemoriesPage.tsx",
-        "frontend/src/pages/PhotosPage.tsx",
-        "frontend/src/pages/VideosPage.tsx"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "blob-storage@4.0.0",
-        "http-outcalls@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-15"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-create-a-pin-reset-forgot-flow-that-allows-users-to-reset-their-pin-through-security-questions-or-identity-re-verification",
-      "featureTitle": "Create a PIN reset/forgot flow that allows users to reset their PIN through security questions or identity re-verification",
-      "files": [
-        "frontend/src/components/PinReset.tsx",
-        "frontend/src/components/PinVerification.tsx",
-        "frontend/src/lib/translations.ts"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "blob-storage@4.0.0",
-        "http-outcalls@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-17"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-change-pin-option-in-the-profile-settings-that-requires-current-pin-verification-before-allowing-a-new-pin-to-be-set",
-      "featureTitle": "Add a Change PIN option in the Profile settings that requires current PIN verification before allowing a new PIN to be set",
-      "files": [
-        "frontend/src/components/PinChangeForm.tsx",
-        "frontend/src/lib/translations.ts",
-        "frontend/src/pages/ProfilePage.tsx"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "blob-storage@4.0.0",
-        "http-outcalls@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-18"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-english-and-hindi-translations-for-all-pin-related-ui-text-including-setup-verification-forgot-change-and-error-messages",
-      "featureTitle": "Add English and Hindi translations for all PIN-related UI text including setup, verification, forgot, change, and error messages",
-      "files": [
-        "frontend/src/lib/translations.ts"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "blob-storage@4.0.0",
-        "http-outcalls@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-19"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-session-based-pin-authentication-so-users-do-not-need-to-re-enter-pin-for-every-folder-access-within-the-same-session",
-      "featureTitle": "Implement session-based PIN authentication so users do not need to re-enter PIN for every folder access within the same session",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/Navigation.tsx",
-        "frontend/src/hooks/usePinSession.ts",
-        "frontend/src/lib/translations.ts"
-      ],
-      "components": [
-        "authorization@3.0.0",
-        "blob-storage@4.0.0",
-        "http-outcalls@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-20"
+        "REQ-10"
       ],
       "confidence": "high"
     }

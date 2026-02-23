@@ -99,6 +99,16 @@ export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
 }
+export interface AggregateStorageSummary {
+    totalPhotosSize: bigint;
+    totalVideosSize: bigint;
+    totalVideos: bigint;
+    totalMemoriesSize: bigint;
+    totalPhotos: bigint;
+    totalMemories: bigint;
+    totalDocumentsSize: bigint;
+    totalDocuments: bigint;
+}
 export type Time = bigint;
 export interface BulkVideoUploadResponse {
     errors: Array<string>;
@@ -109,6 +119,20 @@ export interface BulkVideoUploadResponse {
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
+export interface StorageSummary {
+    videosCount: bigint;
+    photosSize: bigint;
+    memoriesSize: bigint;
+    memoriesCount: bigint;
+    documentsSize: bigint;
+    videosSize: bigint;
+    photosCount: bigint;
+    documentsCount: bigint;
+}
+export interface _CaffeineStorageCreateCertificateResult {
+    method: string;
+    blob_hash: string;
+}
 export interface PhotoMetadata {
     id: bigint;
     storageReference: ExternalBlob;
@@ -117,10 +141,6 @@ export interface PhotoMetadata {
     fileSize: bigint;
     filename: string;
     uploadDate: Time;
-}
-export interface _CaffeineStorageCreateCertificateResult {
-    method: string;
-    blob_hash: string;
 }
 export interface BulkPhotoUploadRequest {
     photos: Array<PhotoUploadRequest>;
@@ -181,18 +201,23 @@ export interface backendInterface {
         message: string;
     }>;
     downloadVideo(_videoId: bigint): Promise<void>;
+    getAggregateStorageSummary(): Promise<AggregateStorageSummary>;
     getAllPhotos(): Promise<Array<PhotoMetadata>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getPhotoMetadata(photoId: bigint): Promise<PhotoMetadata>;
     getPhotoStorageUsage(): Promise<bigint>;
+    getUniqueUserProfileCount(): Promise<bigint>;
     getUserLanguagePreference(): Promise<Language>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserStorageSummary(principal: Principal): Promise<StorageSummary>;
     getVideo(videoId: bigint): Promise<VideoMetadata>;
     getVideoStorageUsage(): Promise<bigint>;
     getVideos(): Promise<VideosResponse>;
+    getVirtualCanisterCount(): Promise<bigint>;
     initializeAccessControl(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    resetPin(principalToUpdate: Principal, newPin: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setUserLanguagePreference(language: Language): Promise<void>;
     updateProfilePicture(pictureReference: ExternalBlob | null): Promise<void>;
@@ -363,6 +388,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getAggregateStorageSummary(): Promise<AggregateStorageSummary> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAggregateStorageSummary();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAggregateStorageSummary();
+            return result;
+        }
+    }
     async getAllPhotos(): Promise<Array<PhotoMetadata>> {
         if (this.processError) {
             try {
@@ -433,6 +472,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getUniqueUserProfileCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUniqueUserProfileCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUniqueUserProfileCount();
+            return result;
+        }
+    }
     async getUserLanguagePreference(): Promise<Language> {
         if (this.processError) {
             try {
@@ -459,6 +512,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getUserStorageSummary(arg0: Principal): Promise<StorageSummary> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserStorageSummary(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserStorageSummary(arg0);
+            return result;
         }
     }
     async getVideo(arg0: bigint): Promise<VideoMetadata> {
@@ -503,6 +570,20 @@ export class Backend implements backendInterface {
             return from_candid_VideosResponse_n24(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getVirtualCanisterCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getVirtualCanisterCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getVirtualCanisterCount();
+            return result;
+        }
+    }
     async initializeAccessControl(): Promise<void> {
         if (this.processError) {
             try {
@@ -528,6 +609,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async resetPin(arg0: Principal, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.resetPin(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.resetPin(arg0, arg1);
             return result;
         }
     }

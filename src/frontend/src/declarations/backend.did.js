@@ -24,6 +24,16 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const AggregateStorageSummary = IDL.Record({
+  'totalPhotosSize' : IDL.Nat,
+  'totalVideosSize' : IDL.Nat,
+  'totalVideos' : IDL.Nat,
+  'totalMemoriesSize' : IDL.Nat,
+  'totalPhotos' : IDL.Nat,
+  'totalMemories' : IDL.Nat,
+  'totalDocumentsSize' : IDL.Nat,
+  'totalDocuments' : IDL.Nat,
+});
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const Time = IDL.Int;
 export const PhotoMetadata = IDL.Record({
@@ -44,6 +54,16 @@ export const UserProfile = IDL.Record({
   'languagePreference' : Language,
   'name' : IDL.Text,
   'profilePicture' : IDL.Opt(ExternalBlob),
+});
+export const StorageSummary = IDL.Record({
+  'videosCount' : IDL.Nat,
+  'photosSize' : IDL.Nat,
+  'memoriesSize' : IDL.Nat,
+  'memoriesCount' : IDL.Nat,
+  'documentsSize' : IDL.Nat,
+  'videosSize' : IDL.Nat,
+  'photosCount' : IDL.Nat,
+  'documentsCount' : IDL.Nat,
 });
 export const VideoMetadata = IDL.Record({
   'id' : IDL.Nat,
@@ -124,22 +144,35 @@ export const idlService = IDL.Service({
       [],
     ),
   'downloadVideo' : IDL.Func([IDL.Nat], [], []),
+  'getAggregateStorageSummary' : IDL.Func(
+      [],
+      [AggregateStorageSummary],
+      ['query'],
+    ),
   'getAllPhotos' : IDL.Func([], [IDL.Vec(PhotoMetadata)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getPhotoMetadata' : IDL.Func([IDL.Nat], [PhotoMetadata], ['query']),
   'getPhotoStorageUsage' : IDL.Func([], [IDL.Nat], ['query']),
+  'getUniqueUserProfileCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getUserLanguagePreference' : IDL.Func([], [Language], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getUserStorageSummary' : IDL.Func(
+      [IDL.Principal],
+      [StorageSummary],
+      ['query'],
+    ),
   'getVideo' : IDL.Func([IDL.Nat], [VideoMetadata], ['query']),
   'getVideoStorageUsage' : IDL.Func([], [IDL.Nat], ['query']),
   'getVideos' : IDL.Func([], [VideosResponse], ['query']),
+  'getVirtualCanisterCount' : IDL.Func([], [IDL.Nat], ['query']),
   'initializeAccessControl' : IDL.Func([], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'resetPin' : IDL.Func([IDL.Principal, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setUserLanguagePreference' : IDL.Func([Language], [], []),
   'updateProfilePicture' : IDL.Func([IDL.Opt(ExternalBlob)], [], []),
@@ -177,6 +210,16 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const AggregateStorageSummary = IDL.Record({
+    'totalPhotosSize' : IDL.Nat,
+    'totalVideosSize' : IDL.Nat,
+    'totalVideos' : IDL.Nat,
+    'totalMemoriesSize' : IDL.Nat,
+    'totalPhotos' : IDL.Nat,
+    'totalMemories' : IDL.Nat,
+    'totalDocumentsSize' : IDL.Nat,
+    'totalDocuments' : IDL.Nat,
+  });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const Time = IDL.Int;
   const PhotoMetadata = IDL.Record({
@@ -194,6 +237,16 @@ export const idlFactory = ({ IDL }) => {
     'languagePreference' : Language,
     'name' : IDL.Text,
     'profilePicture' : IDL.Opt(ExternalBlob),
+  });
+  const StorageSummary = IDL.Record({
+    'videosCount' : IDL.Nat,
+    'photosSize' : IDL.Nat,
+    'memoriesSize' : IDL.Nat,
+    'memoriesCount' : IDL.Nat,
+    'documentsSize' : IDL.Nat,
+    'videosSize' : IDL.Nat,
+    'photosCount' : IDL.Nat,
+    'documentsCount' : IDL.Nat,
   });
   const VideoMetadata = IDL.Record({
     'id' : IDL.Nat,
@@ -274,22 +327,35 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'downloadVideo' : IDL.Func([IDL.Nat], [], []),
+    'getAggregateStorageSummary' : IDL.Func(
+        [],
+        [AggregateStorageSummary],
+        ['query'],
+      ),
     'getAllPhotos' : IDL.Func([], [IDL.Vec(PhotoMetadata)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getPhotoMetadata' : IDL.Func([IDL.Nat], [PhotoMetadata], ['query']),
     'getPhotoStorageUsage' : IDL.Func([], [IDL.Nat], ['query']),
+    'getUniqueUserProfileCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getUserLanguagePreference' : IDL.Func([], [Language], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getUserStorageSummary' : IDL.Func(
+        [IDL.Principal],
+        [StorageSummary],
+        ['query'],
+      ),
     'getVideo' : IDL.Func([IDL.Nat], [VideoMetadata], ['query']),
     'getVideoStorageUsage' : IDL.Func([], [IDL.Nat], ['query']),
     'getVideos' : IDL.Func([], [VideosResponse], ['query']),
+    'getVirtualCanisterCount' : IDL.Func([], [IDL.Nat], ['query']),
     'initializeAccessControl' : IDL.Func([], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'resetPin' : IDL.Func([IDL.Principal, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setUserLanguagePreference' : IDL.Func([Language], [], []),
     'updateProfilePicture' : IDL.Func([IDL.Opt(ExternalBlob)], [], []),

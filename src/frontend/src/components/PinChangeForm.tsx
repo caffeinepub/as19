@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useTranslations } from '../lib/translations';
-import { useChangePin } from '../hooks/useQueries';
+import { useChangePin, useVerifyPin } from '../hooks/useQueries';
+import { usePinSession } from '../hooks/usePinSession';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,10 +15,13 @@ export default function PinChangeForm() {
   const { language } = useLanguage();
   const t = useTranslations(language);
   const changePin = useChangePin();
+  const verifyPin = useVerifyPin();
+  const { clearSession } = usePinSession();
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const isPinValid = newPin.length >= 4 && newPin.length <= 6 && /^\d+$/.test(newPin);
   const pinsMatch = newPin === confirmNewPin && confirmNewPin.length > 0;
@@ -49,10 +53,23 @@ export default function PinChangeForm() {
     }
 
     try {
+      // First verify the current PIN
+      setIsVerifying(true);
+      const isCurrentPinValid = await verifyPin.mutateAsync(currentPin);
+      setIsVerifying(false);
+
+      if (!isCurrentPinValid) {
+        const error = t('pin.currentPinIncorrect');
+        setErrorMessage(error);
+        toast.error(error);
+        setCurrentPin('');
+        return;
+      }
+
+      // If current PIN is valid, proceed with change
       await changePin.mutateAsync({ currentPin, newPin });
       toast.success(t('pin.changeSuccess'));
-      // Clear session storage to require new PIN entry
-      sessionStorage.removeItem('pin_verified');
+      clearSession();
       setCurrentPin('');
       setNewPin('');
       setConfirmNewPin('');
@@ -70,6 +87,8 @@ export default function PinChangeForm() {
       toast.error(errorMsg);
     }
   };
+
+  const isProcessing = isVerifying || changePin.isPending;
 
   return (
     <Card className="w-full max-w-2xl">
@@ -111,8 +130,8 @@ export default function PinChangeForm() {
                   if (errorMessage) setErrorMessage(null);
                 }
               }}
-              className="text-lg py-3 rounded-xl text-center tracking-widest"
-              disabled={changePin.isPending}
+              className="text-lg py-6 rounded-xl text-center tracking-widest"
+              disabled={isProcessing}
               maxLength={6}
             />
           </div>
@@ -135,8 +154,8 @@ export default function PinChangeForm() {
                   if (errorMessage) setErrorMessage(null);
                 }
               }}
-              className="text-lg py-3 rounded-xl text-center tracking-widest"
-              disabled={changePin.isPending}
+              className="text-lg py-6 rounded-xl text-center tracking-widest"
+              disabled={isProcessing}
               maxLength={6}
             />
             {newPin.length > 0 && (
@@ -174,8 +193,8 @@ export default function PinChangeForm() {
                   if (errorMessage) setErrorMessage(null);
                 }
               }}
-              className="text-lg py-3 rounded-xl text-center tracking-widest"
-              disabled={changePin.isPending}
+              className="text-lg py-6 rounded-xl text-center tracking-widest"
+              disabled={isProcessing}
               maxLength={6}
             />
             {confirmNewPin.length > 0 && (
@@ -197,13 +216,13 @@ export default function PinChangeForm() {
 
           <Button
             type="submit"
-            className="w-full py-3 text-lg font-semibold rounded-xl"
-            disabled={changePin.isPending || !canSubmit}
+            className="w-full py-6 text-lg font-semibold rounded-xl"
+            disabled={isProcessing || !canSubmit}
           >
-            {changePin.isPending ? (
+            {isProcessing ? (
               <>
                 <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                {t('pin.changing')}
+                {isVerifying ? t('pin.verifying') : t('pin.changing')}
               </>
             ) : (
               <>
